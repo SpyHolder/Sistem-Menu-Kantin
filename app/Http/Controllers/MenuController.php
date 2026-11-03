@@ -59,10 +59,12 @@ class MenuController extends Controller
             $parameter = [];
 
             if ($kataKunci !== '') {
-                $sql .= ' AND (m.kode_menu LIKE :cari_kode
-                          OR m.nama_menu LIKE :cari_nama
-                          OR m.barcode LIKE :cari_barcode)';
-                $nilaiPencarian = '%' . $kataKunci . '%';
+                $sql .= " AND (m.kode_menu LIKE :cari_kode ESCAPE '!'
+                          OR m.nama_menu LIKE :cari_nama ESCAPE '!'
+                          OR m.barcode LIKE :cari_barcode ESCAPE '!')";
+                // Karakter wildcard LIKE (% dan _) di-escape agar dicari sebagai teks biasa.
+                $kataKunciAman = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $kataKunci);
+                $nilaiPencarian = '%'.$kataKunciAman.'%';
                 $parameter['cari_kode'] = $nilaiPencarian;
                 $parameter['cari_nama'] = $nilaiPencarian;
                 $parameter['cari_barcode'] = $nilaiPencarian;
@@ -137,7 +139,7 @@ class MenuController extends Controller
             $simpan->execute($data);
 
             return redirect()->route('menu.index')
-                ->with('berhasil', 'Menu ' . $data['nama_menu'] . ' berhasil ditambahkan.');
+                ->with('berhasil', 'Menu '.$data['nama_menu'].' berhasil ditambahkan.');
         } catch (Throwable $error) {
             report($error);
 
@@ -239,7 +241,7 @@ class MenuController extends Controller
             ]);
 
             return redirect()->route('menu.index')
-                ->with('berhasil', 'Menu ' . $data['nama_menu'] . ' berhasil diperbarui.');
+                ->with('berhasil', 'Menu '.$data['nama_menu'].' berhasil diperbarui.');
         } catch (Throwable $error) {
             report($error);
 
@@ -354,14 +356,14 @@ class MenuController extends Controller
         $cekKode->execute($parameterKode);
 
         if ((int) $cekKode->fetchColumn() > 0) {
-            $errors['kode_menu'] = 'Kode menu ' . $kodeMenu . ' sudah digunakan.';
+            $errors['kode_menu'] = 'Kode menu '.$kodeMenu.' sudah digunakan.';
         }
 
         $cekBarcode = $pdo->prepare($sqlBarcode);
         $cekBarcode->execute($parameterBarcode);
 
         if ((int) $cekBarcode->fetchColumn() > 0) {
-            $errors['barcode'] = 'Barcode ' . $barcode . ' sudah digunakan.';
+            $errors['barcode'] = 'Barcode '.$barcode.' sudah digunakan.';
         }
 
         return $errors;
