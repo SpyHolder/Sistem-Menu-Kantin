@@ -1,59 +1,97 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistem Menu Kantin – Studi Kasus Paket 2 Tipe E
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi CRUD menu kantin berbasis **Laravel 12**, **MySQL**, **PDO prepared statement**, dan **Blade** (HTML sederhana tanpa CSS/JavaScript).
 
-## About Laravel
+| | |
+|---|---|
+| Nama | Mohd Ikhsan Sadillah |
+| NIM | 2401020133 |
+| Mata kuliah | Praktikum Pemrograman Web (INF11197) |
+| Tipe soal | Paket 2 – Tipe E (Sistem Menu Kantin) |
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Kebutuhan
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.2+, Composer
+- MySQL 8 / MariaDB (contoh: Laragon)
+- Git
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Instalasi
 
-## Learning Laravel
+```bash
+git clone <url-repository> menu_kantin_2401020133
+cd menu_kantin_2401020133
+composer install
+cp .env.example .env        # Windows: copy .env.example .env
+php artisan key:generate
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Buat basis data dan data awal dengan menjalankan berkas SQL:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+mysql -u root < database/sql/menu_kantin_2401020133.sql
+```
 
-## Laravel Sponsors
+Sesuaikan `DB_USERNAME` / `DB_PASSWORD` pada `.env` bila perlu, lalu jalankan:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+php artisan serve
+```
 
-### Premium Partners
+Buka http://127.0.0.1:8000/menu
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+> Sesi dan cache memakai driver `file`, sehingga basis data hanya berisi dua tabel sesuai soal.
 
-## Contributing
+## Rancangan Basis Data
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- `kategori_menu` (master): `id` PK, `nama_kategori` VARCHAR(100) NOT NULL UNIQUE
+- `menu` (utama): `id` PK, `kode_menu` CHAR(10) NOT NULL UNIQUE, `nama_menu` VARCHAR(100) NOT NULL,
+  `barcode` VARCHAR(30) NOT NULL UNIQUE, `harga` INT UNSIGNED NOT NULL CHECK (1000–100000),
+  `kategori_menu_id` FK → `kategori_menu(id)` ON UPDATE CASCADE ON DELETE RESTRICT, `created_at`, `updated_at`
 
-## Code of Conduct
+Relasi: satu `kategori_menu` memiliki banyak `menu`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Daftar Route
 
-## Security Vulnerabilities
+| Method | URL | Nama | Fungsi |
+|---|---|---|---|
+| GET | `/menu` | `menu.index` | Daftar menu, form tambah, pencarian, filter, feedback |
+| POST | `/menu` | `menu.store` | Menyimpan menu baru |
+| GET | `/menu/{id}/edit` | `menu.edit` | Form edit dengan data lama |
+| PUT | `/menu/{id}` | `menu.update` | Memperbarui menu (method spoofing) |
+| DELETE | `/menu/{id}` | `menu.destroy` | Menghapus menu (method spoofing + CSRF) |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Struktur Berkas Utama
 
-## License
+```
+app/Http/Controllers/MenuController.php   # CRUD, PDO prepared statement, try-catch + report()
+app/Helpers/menu_helper.php               # statusHarga() dan formatRupiah()
+resources/views/menu/index.blade.php      # Indeks: form tambah, cari, filter, tabel
+resources/views/menu/edit.blade.php       # Form edit
+routes/web.php                            # Lima route CRUD
+database/sql/menu_kantin_2401020133.sql   # DDL + DML
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Keamanan
+
+- Input teks disanitasi dengan `trim()` dan `strip_tags()`, lalu divalidasi di server.
+- Semua query memakai `$pdo->prepare()` + `execute()` dengan parameter terikat.
+- Kode menu dan barcode diperiksa duplikatnya sebelum disimpan atau diperbarui.
+- Kesalahan basis data ditangkap `try-catch`, dicatat dengan `report()` ke `storage/logs/laravel.log`,
+  dan pengguna hanya menerima pesan singkat yang aman.
+- Form memakai `@csrf`; PUT dan DELETE memakai `@method`.
+- File `.env` tidak masuk repository (lihat `.gitignore`).
+
+## Skenario Pengujian
+
+| No | Uji | Langkah | Hasil yang diharapkan |
+|---|---|---|---|
+| 1 | Read | Buka `/menu` | 3 data awal dan nama kategori tampil |
+| 2 | Create valid | `MN00000004`, Ayam Bakar, `BR-MKN-0003`, 25000, Makanan | Data tersimpan, pesan berhasil, status Premium |
+| 3 | Create tidak valid | `AB12`, `Es`, `B1`, 500, kategori kosong | Pesan kesalahan tampil, input lama dipertahankan |
+| 4 | Duplikat | Kode `MN00000001` / barcode `BR-MKN-0001` | Ditolak, data tidak berubah |
+| 5 | Update | Edit menu, ubah nama/harga | Data lama tampil di form, perubahan tersimpan |
+| 6 | Konflik update | Ubah kode menjadi `MN00000002` milik menu lain | Ditolak |
+| 7 | Delete | Klik Hapus | Data terhapus melalui form DELETE dengan CSRF |
+| 8 | Pencarian | `q=teh`, `q=MN00000003`, `q=BR-MKN` | Mencari di kode, nama, barcode |
+| 9 | Filter | Pilih kategori Minuman | Hanya menu Minuman tampil |
+| 10 | Error handling | Matikan MySQL / ubah nama tabel sementara, buka `/menu` | Pesan aman tampil, detail tercatat di log |
